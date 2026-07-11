@@ -19,6 +19,10 @@
 
 ### Refactor
 
+### Refactor
+
+- 通过 OpenSpec 变更 `localize-openspec-specs-to-chinese` 把 `openspec/specs/json-viewer`、`mybatis-sql-formatter`、`toybox-hub` 三个当前事实翻译为中文；同时把 `openspec/changes/archive/2026-07-10-add-toybox-hub-and-initial-tools/` 下的所有历史快照（proposal / design / tasks / README / 三个 spec）一并翻译为中文。`## Purpose`、`## Requirements` 等 OpenSpec 工具硬性要求的 section 标题保留英文。
+
 - 将 `package.json` 与 `src/` 下的用户面向文案中文化：扩展/命令 `description`、表单字段、Action title、Toast 提示、Detail Metadata 等统一改为中文；JSDoc 注释同步中文化。`tools.ts` 的 `keywords` 仍保持英文技术关键词。
 
 ### Chore

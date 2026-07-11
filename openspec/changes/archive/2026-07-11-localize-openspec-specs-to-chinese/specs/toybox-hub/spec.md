@@ -1,10 +1,10 @@
 # toybox-hub 规格说明
 
-## Purpose
+## 目的
 
 ToyBox 中央入口命令：在主入口以可搜索列表展示所有已注册的工具，选中后通过 `launchCommand` 跳转到对应子命令。
 
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Hub command is registered
 

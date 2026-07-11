@@ -1,14 +1,14 @@
 # json-viewer 规格说明
 
-## Purpose
+## 目的
 
 JSON 查看器命令：从剪贴板读取或由用户手动输入 JSON 内容，将其美化后呈现并提供一键复制。
 
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: JSON command is registered
 
-扩展 MUST 在 `package.json` 中以 `mode: "view"` 注册一个 `json` 命令，以便该工具可以直接从 Raycast 命令面板调用。
+扩展MUST在 `package.json` 中以 `mode: "view"` 注册一个 `json` 命令，以便该工具可以直接从 Raycast 命令面板调用。
 
 #### Scenario: JSON command is discoverable
 
@@ -17,7 +17,7 @@ JSON 查看器命令：从剪贴板读取或由用户手动输入 JSON 内容，
 
 ### Requirement: Clipboard auto-detection on mount
 
-命令在挂载时 MUST 调用 `Clipboard.readText()`。如果返回的文本能解析为 JSON，命令 MUST 立即推送到一个结果视图，展示美化后的输出，无需用户进一步交互。
+命令在挂载时MUST调用 `Clipboard.readText()`。如果返回的文本能解析为 JSON，命令MUST立即推送到一个结果视图，展示美化后的输出，无需用户进一步交互。
 
 #### Scenario: Valid JSON in clipboard
 
@@ -31,7 +31,7 @@ JSON 查看器命令：从剪贴板读取或由用户手动输入 JSON 内容，
 
 ### Requirement: Manual entry via Form
 
-表单 MUST 通过 `Action.SubmitForm` 提交。提交时 MUST 重新校验输入；成功时推送到与剪贴板自动识别相同的结果视图，失败时 MUST 显示一个包含底层解析错误的 `Toast.Failure`。
+表单MUST通过 `Action.SubmitForm` 提交。提交时MUST重新校验输入；成功时推送到与剪贴板自动识别相同的结果视图，失败时MUST显示一个包含底层解析错误的 `Toast.Failure`。
 
 #### Scenario: Manual JSON succeeds
 
@@ -45,7 +45,7 @@ JSON 查看器命令：从剪贴板读取或由用户手动输入 JSON 内容，
 
 ### Requirement: Result view provides copy actions
 
-结果视图 MUST 提供：
+结果视图MUST提供：
 
 - 主操作：把美化后的 JSON 复制到剪贴板
 - 次操作：把原始（未格式化）输入复制到剪贴板
@@ -62,7 +62,7 @@ JSON 查看器命令：从剪贴板读取或由用户手动输入 JSON 内容，
 
 ### Requirement: Result view exposes metadata
 
-结果视图 MUST 在元数据侧栏展示 JSON 值的高层类型（对象 / 数组 / 原始值）、字符数与字节大小（同时包括美化后与原始输入）。
+结果视图MUST在元数据侧栏展示 JSON 值的高层类型（对象 / 数组 / 原始值）、字符数与字节大小（同时包括美化后与原始输入）。
 
 #### Scenario: Metadata reflects the value
 

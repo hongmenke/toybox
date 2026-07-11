@@ -1,52 +1,54 @@
-## Context
+## 背景
 
-ToyBox is a brand-new Raycast extension. The repo started with only a single placeholder command (`toybox`) and no user-facing capabilities. We are introducing:
+ToyBox 是一个全新的 Raycast 扩展。仓库最初只有一个占位命令（`toybox`），没有任何面向用户的能力。本次变更引入：
 
-1. A hub command that lists every tool registered with the extension and launches the matching sub-command.
-2. Two initial developer utilities (JSON viewer, MyBatis SQL formatter), each implemented as an independent Raycast command.
+1. 一个中央入口命令，列出本扩展注册的所有工具，并启动对应的子命令。
+2. 两个初始的开发者工具（JSON 查看器、MyBatis SQL 格式化器），各自实现为独立的 Raycast 命令。
 
-Raycast supports a few different ways to wire up a "hub → sub-command" navigation:
+Raycast 提供了几种"中央入口 → 子命令"导航的实现方式：
 
-- **Action.Push** with a `target={<Component/>}` stays inside the current command's view stack.
-- **launchCommand** opens a new root view for the named sub-command. This is what most multi-tool Raycast extensions (e.g. Kill Process, Manage Extensions) use because each sub-command gets its own navigation history, its own arguments/preferences, and shows up directly in Raycast's command palette.
-- **Deeplinks** via `createDeeplink` produce a URL the user can share but otherwise behave the same as `launchCommand`.
+- **`Action.Push` 配合 `target={<Component/>}`**：停留在当前命令的视图栈中。
+- **`launchCommand`**：为指定子命令打开新的根视图。多数多工具 Raycast 扩展（如 Kill Process、Manage Extensions）都采用此方式，因为每个子命令都能获得独立的导航历史、参数/偏好，且能直接出现在 Raycast 命令面板中。
+- **`createDeeplink` 生成的 deeplink**：产生可分享的 URL，其他行为与 `launchCommand` 一致。
 
-For ToyBox we want every tool to be reachable directly from the command palette (the spec calls this out: "每个功能都有独立命令") and we want clipboard auto-detection to run only when the user explicitly invokes the tool, not when they open the hub. That points at `launchCommand`.
+ToyBox 期望每个工具都能从命令面板直接调用（规格也明文要求"每个功能都有独立命令"），且剪贴板自动识别只在用户显式调用工具时执行，而不是在打开中央入口时。这指向 `launchCommand`。
 
-## Goals / Non-Goals
+## 目标 / 非目标
 
-**Goals:**
-- Make adding a new tool a one-file change (a single entry in `src/tools.ts`).
-- Give every tool the same clipboard-first / manual-fallback UX so users only learn one flow.
-- Keep the runtime dependency surface flat: no extra libraries beyond `@raycast/api` / `@raycast/utils`.
-- Keep all TypeScript, ESLint, and Prettier checks green so the Raycast store submission workflow keeps working.
+**目标：**
 
-**Non-Goals:**
-- No preferences UI yet — every tool is invoked with sensible defaults. Preferences can be added once the catalogue grows.
-- No remote fetch / network calls — every tool works offline.
-- No streaming / large-output handling. Each tool is sized for "a few KB" of input.
+- 让新增工具成为单文件改动（仅在 `src/tools.ts` 中添加一条记录）。
+- 让所有工具共用同一套"剪贴板优先 / 手动输入兜底"的体验，用户只需学会一种流程。
+- 保持运行时依赖面平整：不引入 `@raycast/api` / `@raycast/utils` 之外的额外库。
+- 保持所有 TypeScript、ESLint、Prettier 检查绿灯，确保 Raycast Store 提交流程顺畅。
 
-## Decisions
+**非目标：**
 
-- **Hub uses `launchCommand`, not `Action.Push`.** Rationale: every tool needs to be independently invokable from the command palette, with its own navigation stack and clipboard auto-detection. `Action.Push` would couple the tool's lifecycle to the hub. Alternatives considered: `Action.Open` with a deeplink — equivalent functionally but adds an `ownerOrAuthorName` requirement when the extension is renamed; we keep `launchCommand` for the simpler same-extension flow.
-- **Tool catalogue is a single static array in `src/tools.ts`.** Rationale: the catalogue is small (currently two entries) and rarely changes at runtime. A registry pattern with code-splitting would be overkill. Alternatives considered: lazy `import()` per tool — adds Raycast manifest friction without measurable benefit.
-- **Clipboard auto-detection runs in `useEffect`, not synchronously in render.** Rationale: `Clipboard.readText()` is async. Calling it inside render would either block or require `Suspense`. The `useEffect` approach mirrors the existing Raycast API examples and gives us a clean loading state.
-- **JSON formatting uses 2-space indent.** Rationale: matches the default in `JSON.stringify(value, null, 2)` and what most editors produce. Configurable indent can come later if requested.
-- **MyBatis parameter parsing splits on `, ` then re-merges tokens that lack a balanced `(Type)` suffix.** Rationale: MyBatis does not escape commas inside string values, so a naive split can split a single parameter in two. Re-merging until we see a balanced `(Type)` suffix matches the official log format.
-- **Each tool returns a Raycast `Detail` for its result, not a custom React view.** Rationale: `Detail` gives us free markdown rendering (so the formatted SQL/JSON is highlighted), a metadata sidebar, and the built-in `Action.CopyToClipboard`. Custom views would duplicate all of that.
-- **No tests added in this change.** Rationale: the parsing logic is small and the smoke tests we ran while building it have proven the algorithm. Formal test infrastructure (e.g. `vitest`) can be added in a follow-up change once there is shared test scaffolding.
+- 暂不提供偏好设置 UI——每个工具以合理默认值调用；待工具目录增长后再补充。
+- 不进行远端拉取 / 网络调用——所有工具完全离线工作。
+- 不处理流式 / 大输出场景。每个工具的输入规模设计为"几 KB"。
 
-## Risks / Trade-offs
+## 关键决策
 
-- **MyBatis logs containing commas inside unquoted strings are ambiguous.** We pick the re-merge heuristic but it can still mis-parse pathological inputs. Mitigation: the result view shows the original log alongside the formatted SQL so the user can spot mistakes.
-- **`launchCommand` keeps the hub in the navigation stack.** Pressing ESC returns to the hub, not to the Raycast root. Mitigation: each tool's result view exposes an "Edit Input" action that pops the stack; users who want to return to the root can use the standard Raycast close shortcut.
-- **The hub disables Raycast's built-in filtering (`filtering={false}`) and instead relies on `keywords` on each item.** Raycast's `List` filter algorithm doesn't expose the search text via a hook, so wiring a fuzzy matcher would require either a `useState` + custom search or a `List.Item.Detail` pattern. For a two-item list the `keywords`-based filter is sufficient.
+- **中央入口使用 `launchCommand`，而非 `Action.Push`。** 理由：每个工具都需要能独立从命令面板调用，拥有自己的导航栈与剪贴板自动识别逻辑；`Action.Push` 会把工具的生命周期与中央入口耦合。备选方案：使用 `Action.Open` 配合 deeplink——功能上等价，但扩展改名时需要额外的 `ownerOrAuthorName` 参数；为简化同扩展内流程，我们保留 `launchCommand`。
+- **工具目录是 `src/tools.ts` 中的单一静态数组。** 理由：当前规模小（仅两条），运行时很少变动；带代码分割的注册表模式收益甚微。备选方案：按工具 `import()` 懒加载——徒增 Raycast manifest 复杂度，且无明显收益。
+- **剪贴板自动识别在 `useEffect` 中执行，而非渲染中同步触发。** 理由：`Clipboard.readText()` 是异步的；渲染中调用要么阻塞，要么必须配合 `Suspense`。`useEffect` 与 Raycast 官方示例一致，且能给出清晰的 loading 态。
+- **JSON 格式化使用 2 空格缩进。** 理由：与 `JSON.stringify(value, null, 2)` 的默认行为及多数编辑器的输出一致；如未来有需要可加入可配置缩进。
+- **MyBatis 参数解析：先按 `, ` 切分，再把缺少配对 `(Type)` 后缀的 token 重新合并。** 理由：MyBatis 不会对字符串中的逗号做转义，朴素的切分会把单个参数拆成两段；通过"直到看到配对的 `(Type)` 后缀才合并"的方式贴合官方日志格式。
+- **每个工具使用 Raycast 的 `Detail` 视图呈现结果，而非自定义 React 视图。** 理由：`Detail` 自带 markdown 渲染（格式化的 SQL/JSON 会高亮）、元数据侧栏以及内置的 `Action.CopyToClipboard`；自定义视图会重复实现这些能力。
+- **本次不添加自动化测试。** 理由：解析逻辑规模小，构建过程中的冒烟测试已证明算法正确。正式的测试基础设施（如 `vitest`）可待共享测试脚手架就位后，在后续变更中补齐。
 
-## Migration Plan
+## 风险与权衡
 
-This is the first commit in the repo, so there is nothing to migrate. Future capability additions will be authored as new OpenSpec changes (e.g. `add-base64-tool`) and archived once implemented.
+- **MyBatis 日志中含未加引号的逗号字符串具有歧义。** 我们选择了"重新合并"的启发式，但在病态输入下仍可能误解析。缓解措施：结果视图会同时展示原始日志与格式化后的 SQL，方便用户核对。
+- **`launchCommand` 会让中央入口停留在导航栈中。** 按 ESC 会返回中央入口，而不是 Raycast 根。缓解措施：每个工具的结果视图提供"编辑输入"操作以出栈；想回到根的用户可使用 Raycast 的标准关闭快捷键。
+- **中央入口禁用了 Raycast 内置的过滤（`filtering={false}`），改用每个条目的 `keywords`。** Raycast `List` 过滤算法没有通过 hook 暴露搜索文本，所以要接模糊匹配只能选择 `useState` + 自定义搜索或 `List.Item.Detail` 模式。对当前两个工具的列表规模，基于 `keywords` 的过滤已经足够。
 
-## Open Questions
+## 迁移计划
 
-- Should the hub support tool groups / categories once we have more than five tools? (Probably yes — revisit when count > 5.)
-- Should each tool remember the last manual input via `useLocalStorage`? (Probably useful for the MyBatis formatter, defer to a follow-up.)
+本次是仓库的首次提交，没有需要迁移的内容。后续能力的新增将以 OpenSpec 变更（例如 `add-base64-tool`）的形式撰写，并在实现后归档。
+
+## 待定问题
+
+- 当工具数超过 5 个时，中央入口是否需要支持工具分组 / 分类？（很可能需要，等数量 > 5 时再评估。）
+- 是否让每个工具通过 `useLocalStorage` 记住上次的手动输入？（对 MyBatis 格式化器比较有用，先延后到后续变更。）

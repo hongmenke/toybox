@@ -1,52 +1,66 @@
-# JSON Viewer
+# JSON 查看器
 
-## ADDED Requirements
+## 新增需求（ADDED Requirements）
 
-### Requirement: JSON command is registered
-The extension MUST register a `json` command in `package.json` with `mode: "view"` so the tool can be invoked directly from the Raycast command palette.
+### 需求：JSON 命令已注册
 
-#### Scenario: JSON command is discoverable
-- **WHEN** a developer opens Raycast and types "Format JSON"
-- **THEN** the `json` command appears in the result list
+扩展 MUST 在 `package.json` 中以 `mode: "view"` 注册一个 `json` 命令，以便该工具可以直接从 Raycast 命令面板调用。
 
-### Requirement: Clipboard auto-detection on mount
-On mount the command MUST call `Clipboard.readText()`. If the returned text parses as JSON the command MUST immediately push a result view showing the pretty-printed output without further user interaction.
+#### 场景：JSON 命令可被检索
 
-#### Scenario: Valid JSON in clipboard
-- **WHEN** the clipboard contains a syntactically valid JSON value at the time the command opens
-- **THEN** the command navigates straight to a `Detail` view that renders the value formatted with 2-space indentation inside a `json` fenced code block
+- **WHEN** 开发者打开 Raycast 并输入 "格式化 JSON"（或 "Format JSON"）
+- **THEN** `json` 命令出现在结果列表中
 
-#### Scenario: Empty or invalid clipboard
-- **WHEN** the clipboard is empty or contains a string that does not parse as JSON
-- **THEN** the command renders a `Form` with a `TextArea` so the user can paste or type JSON manually
+### 需求：挂载时自动识别剪贴板
 
-### Requirement: Manual entry via Form
-The Form MUST submit through `Action.SubmitForm`. On submit it MUST re-validate the input and, on success, push to the same result view used for clipboard auto-detection. On failure it MUST display a `Toast.Failure` containing the underlying parse error.
+命令在挂载时 MUST 调用 `Clipboard.readText()`。如果返回的文本能解析为 JSON，命令 MUST 立即推送到一个结果视图，展示美化后的输出，无需用户进一步交互。
 
-#### Scenario: Manual JSON succeeds
-- **WHEN** the user types JSON into the Form and presses Enter
-- **THEN** the command navigates to the result view showing the pretty-printed JSON
+#### 场景：剪贴板内含合法 JSON
 
-#### Scenario: Manual JSON fails to parse
-- **WHEN** the user submits a Form value that is not valid JSON
-- **THEN** a failure toast appears and the Form remains visible
+- **WHEN** 命令打开时剪贴板内含一段语法合法的 JSON 值
+- **THEN** 命令直接进入 `Detail` 视图，使用 2 空格缩进在 `json` 围栏代码块中渲染该值
 
-### Requirement: Result view provides copy actions
-The result view MUST expose:
-- A primary action that copies the formatted JSON to the clipboard.
-- A secondary action that copies the original (un-formatted) input to the clipboard.
+#### 场景：剪贴板为空或内容非法
 
-#### Scenario: Formatted JSON can be copied
-- **WHEN** the user triggers the primary action on the result view
-- **THEN** the clipboard contains the pretty-printed JSON
+- **WHEN** 剪贴板为空，或包含无法解析为 JSON 的字符串
+- **THEN** 命令渲染一个带 `TextArea` 的 `Form`，让用户可以手动粘贴或输入 JSON
 
-#### Scenario: Raw input can be copied
-- **WHEN** the user triggers the secondary "copy raw" action on the result view
-- **THEN** the clipboard contains the original text exactly as the user submitted it
+### 需求：通过 Form 手动输入
 
-### Requirement: Result view exposes metadata
-The result view MUST display, in the metadata sidebar, the JSON value's high-level type (object / array / primitive), character count, and byte size of both the formatted and original inputs.
+表单 MUST 通过 `Action.SubmitForm` 提交。提交时 MUST 重新校验输入；成功时推送到与剪贴板自动识别相同的结果视图，失败时 MUST 显示一个包含底层解析错误的 `Toast.Failure`。
 
-#### Scenario: Metadata reflects the value
-- **WHEN** the result view is rendered
-- **THEN** the metadata sidebar lists the type, length, and size of the formatted JSON plus the same metrics for the original input
+#### 场景：手动输入 JSON 成功
+
+- **WHEN** 用户在表单中输入 JSON 并按下回车
+- **THEN** 命令进入结果视图，展示美化后的 JSON
+
+#### 场景：手动输入 JSON 解析失败
+
+- **WHEN** 用户提交的表单值不是合法 JSON
+- **THEN** 出现失败提示，表单保持可见
+
+### 需求：结果视图提供复制操作
+
+结果视图 MUST 提供：
+
+- 主操作：把美化后的 JSON 复制到剪贴板
+- 次操作：把原始（未格式化）输入复制到剪贴板
+
+#### 场景：可复制美化后的 JSON
+
+- **WHEN** 用户在结果视图上触发主操作
+- **THEN** 剪贴板中包含美化后的 JSON
+
+#### 场景：可复制原始输入
+
+- **WHEN** 用户触发次操作"复制原始输入"
+- **THEN** 剪贴板中包含用户最初提交的原始文本
+
+### 需求：结果视图展示元数据
+
+结果视图 MUST 在元数据侧栏展示 JSON 值的高层类型（对象 / 数组 / 原始值）、字符数与字节大小（同时包括美化后与原始输入）。
+
+#### 场景：元数据反映当前值
+
+- **WHEN** 结果视图被渲染
+- **THEN** 元数据侧栏列出美化后 JSON 的类型、长度与体积，并对原始输入列出相同指标
