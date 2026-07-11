@@ -17,3 +17,5 @@ compiled_raycast_rust
 # IDE / editor
 /.idea/
 .DS_Store
+
+tmp/
