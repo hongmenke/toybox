@@ -61,7 +61,17 @@ docs: 补充主入口搜索行为说明
 Refs: openspec/changes/archive/2026-07-10-add-toybox-hub-and-initial-tools/
 ```
 
-PR 须通过 `npm run lint`、`npx tsc --noEmit`、`npx prettier --check src/`、`openspec validate --specs`；用户可见的 UI 变更需附改动前后截图，并关联 `tmp/` 中原始需求。
+PR 须通过 `npm run lint`、`npx tsc --noEmit`、`npx prettier --check src/`、`openspec validate --specs`；同步将用户可见的变更写入 `CHANGELOG.md`（详见下一小节）；用户可见的 UI 变更需附改动前后截图，并关联 `tmp/` 中原始需求。
+
+## CHANGELOG 维护
+
+每次完成新功能或新变更并合并到 `main` 之前，必须在同一 PR 中同步更新 `CHANGELOG.md`。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，条目按 [Conventional Commits](https://www.conventionalcommits.org/zh-hans/) 类型归类，使用中文描述。
+
+- **日常变更**：在 PR 合并前将本次变更追加到 `## [Unreleased]` 段对应类型子节下（`Added` / `Changed` / `Fixed` / `Removed` / `Docs` / `Chore` / `Refactor` 等），每条一行中文摘要。
+- **首次正式发布**：将 `## [Unreleased]` 重命名为 `## [X.Y.Z] - YYYY-MM-DD`（版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)，日期为合并当天），并新建一个空的 `## [Unreleased]` 段。
+- **OpenSpec 归档**：随变更归档同步在 `Added` / `Changed` 子节增加一行总结能力差异，并 `Refs:` 对应的归档路径。
+- **维护性变更**：`chore:` / `docs:` / `refactor:` 等不影响用户使用的变更可仅做一行简述，避免日志过度膨胀。
+- **语言规范适用**：CHANGELOG 全文使用中文；专有名词（Keep a Changelog、Conventional Commits、Semantic Versioning 等）保留英文原文。
 
 ## OpenSpec 工作流
 
