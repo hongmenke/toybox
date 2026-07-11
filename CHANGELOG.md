@@ -14,6 +14,7 @@
 ### Docs
 
 - 新增 `AGENTS.md` 贡献者与 AI Agent 指南
+- 引入 CHANGELOG 维护规范：在 `AGENTS.md` 新增「CHANGELOG 维护」小节，要求每次合并前同步追加变更条目
 - 在 `README.md` 与 `AGENTS.md` 补充 [Raycast 官方开发文档](https://developers.raycast.com/) 链接
 
 ### Chore
