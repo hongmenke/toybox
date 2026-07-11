@@ -2,21 +2,19 @@ import { Action, ActionPanel, Clipboard, Detail, Form, Icon, showToast, Toast, u
 import { useEffect, useMemo, useState } from "react";
 
 /**
- * MyBatis log formatter command.
+ * MyBatis 日志格式化命令。
  *
- * MyBatis prints SQL like
+ * MyBatis 打印的 SQL 类似：
  *
  *   ==>  Preparing: SELECT id, name FROM users WHERE status = ? AND created_at > ?
  *   ==> Parameters: 1(Integer), 2024-01-01 00:00:00.000(Timestamp)
  *   <==      Total: 5
  *
- * The two `?` placeholders are hard to copy-paste into a SQL client. This
- * command parses the log, replaces the placeholders with their bound values
- * and surfaces the runnable statement together with a copy action.
+ * 这些 `?` 占位符难以直接复制到 SQL 客户端执行。本命令会解析日志、
+ * 用绑定值替换占位符，并把可执行的语句连同一键复制操作一起呈现。
  *
- * On mount we read the clipboard. If it already contains a parseable log
- * snippet, we go straight to the result view. Otherwise we drop the user
- * into a Form so they can paste the log manually.
+ * 启动时读取剪贴板：若已包含可解析的日志片段，直接进入结果视图；
+ * 否则回退到 Form 表单让用户手动粘贴。
  */
 export default function Command() {
   const navigation = useNavigation();
@@ -38,7 +36,7 @@ export default function Command() {
           setClipboard({ value: null, status: "ready" });
           await showToast({
             style: Toast.Style.Failure,
-            title: "Could not read clipboard",
+            title: "无法读取剪贴板",
             message: error instanceof Error ? error.message : String(error),
           });
         }
@@ -64,7 +62,7 @@ export default function Command() {
   }, [clipboard, navigation]);
 
   if (clipboard.status === "loading") {
-    return <Detail isLoading markdown="Reading clipboard…" />;
+    return <Detail isLoading markdown="正在读取剪贴板…" />;
   }
 
   // Clipboard did not look like a MyBatis log – let the user paste it.
@@ -81,14 +79,14 @@ function MybatisInputForm({ initialValue }: { initialValue: string }) {
       actions={
         <ActionPanel>
           <Action.SubmitForm
-            title="Format SQL"
+            title="格式化 SQL"
             icon={Icon.Checkmark}
             onSubmit={(values) => {
               const text = (values.content ?? "").trim();
               if (!text) {
                 showToast({
                   style: Toast.Style.Failure,
-                  title: "Please paste a MyBatis log snippet first",
+                  title: "请先粘贴 MyBatis 日志片段",
                 });
                 return;
               }
@@ -96,8 +94,8 @@ function MybatisInputForm({ initialValue }: { initialValue: string }) {
               if (!parsed) {
                 showToast({
                   style: Toast.Style.Failure,
-                  title: "No `Preparing:` line found",
-                  message: "Copy the lines starting with `==> Preparing:` from your logs.",
+                  title: "未找到 Preparing: 行",
+                  message: "请复制日志中以 `==> Preparing:` 开头的行。",
                 });
                 return;
               }
@@ -109,14 +107,14 @@ function MybatisInputForm({ initialValue }: { initialValue: string }) {
     >
       <Form.TextArea
         id="content"
-        title="MyBatis Log"
+        title="MyBatis 日志"
         placeholder={"==>  Preparing: SELECT * FROM users WHERE id = ?\n" + "==> Parameters: 1(Integer)"}
         defaultValue={initialValue}
         enableMarkdown={false}
       />
       <Form.Description
-        title="Tip"
-        text="Copy the `==> Preparing:` and `==> Parameters:` lines from your MyBatis log and submit with ⏎."
+        title="提示"
+        text="复制 MyBatis 日志中 `==> Preparing:` 与 `==> Parameters:` 开头的行，按 ⏎ 提交。"
       />
     </Form>
   );
@@ -134,25 +132,25 @@ function MybatisResultView({ parsed, original }: { parsed: ParsedMybatisLog; ori
       actions={
         <ActionPanel>
           <Action.CopyToClipboard
-            title="Copy Formatted SQL"
+            title="复制格式化后的 SQL"
             icon={Icon.Clipboard}
             content={parsed.sql}
             shortcut={{ modifiers: ["cmd"], key: "c" }}
           />
           <Action.CopyToClipboard
-            title="Copy as Insert Statement"
+            title="复制为 INSERT 语句"
             icon={Icon.Plus}
             content={toInsertStatement(parsed.sql)}
             shortcut={{ modifiers: ["cmd", "shift"], key: "i" }}
           />
           <Action.CopyToClipboard
-            title="Copy Original Log"
+            title="复制原始日志"
             icon={Icon.Text}
             content={original}
             shortcut={{ modifiers: ["cmd", "shift"], key: "c" }}
           />
           <Action
-            title="Edit Input"
+            title="编辑输入"
             icon={Icon.Pencil}
             shortcut={{ modifiers: ["cmd"], key: "e" }}
             onAction={() => navigation.pop()}
@@ -362,14 +360,14 @@ function toInsertStatement(sql: string): string {
 function buildMetadata(parsed: ParsedMybatisLog) {
   return (
     <Detail.Metadata>
-      <Detail.Metadata.Label title="Parameters" text={`${parsed.parameters.length}`} icon={Icon.List} />
+      <Detail.Metadata.Label title="参数" text={`${parsed.parameters.length}`} icon={Icon.List} />
       <Detail.Metadata.Label
-        title="Template"
+        title="模板"
         text={parsed.template.length > 80 ? `${parsed.template.slice(0, 77)}…` : parsed.template}
       />
       <Detail.Metadata.Separator />
       {parsed.parameters.length === 0 ? (
-        <Detail.Metadata.Label title="(no parameters)" text="" icon={Icon.Minus} />
+        <Detail.Metadata.Label title="（无参数）" text="" icon={Icon.Minus} />
       ) : (
         parsed.parameters.map((p, i) => (
           <Detail.Metadata.Label

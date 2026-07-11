@@ -2,13 +2,12 @@ import { Action, ActionPanel, Clipboard, Detail, Form, Icon, showToast, Toast, u
 import { useEffect, useMemo, useState } from "react";
 
 /**
- * JSON Viewer command.
+ * JSON 查看器命令。
  *
- * Tries to use the clipboard content as JSON on mount; if that fails
- * (empty / invalid) it falls back to a Form where the user can paste or
- * type JSON manually. The successful path always ends up in {@link JsonResultView},
- * which renders the pretty-printed JSON in a Detail pane and exposes a
- * one-click copy action.
+ * 启动时尝试把剪贴板内容当作 JSON 解析；失败时（为空或非法）回退到
+ * Form 表单让用户手动粘贴或输入。成功路径最终都会进入
+ * {@link JsonResultView}，在详情面板中渲染格式化后的 JSON 并提供
+ * 一键复制操作。
  */
 export default function Command() {
   const navigation = useNavigation();
@@ -30,7 +29,7 @@ export default function Command() {
           setClipboard({ value: null, status: "ready" });
           await showToast({
             style: Toast.Style.Failure,
-            title: "Could not read clipboard",
+            title: "无法读取剪贴板",
             message: error instanceof Error ? error.message : String(error),
           });
         }
@@ -57,7 +56,7 @@ export default function Command() {
   }, [clipboard, navigation]);
 
   if (clipboard.status === "loading") {
-    return <Detail isLoading markdown="Reading clipboard…" />;
+    return <Detail isLoading markdown="正在读取剪贴板…" />;
   }
 
   // Clipboard was empty or did not contain JSON – let the user enter it.
@@ -74,19 +73,19 @@ function JsonInputForm({ initialValue }: { initialValue: string }) {
       actions={
         <ActionPanel>
           <Action.SubmitForm
-            title="Format JSON"
+            title="格式化 JSON"
             icon={Icon.Checkmark}
             onSubmit={(values) => {
               const text = (values.content ?? "").trim();
               if (!text) {
-                showToast({ style: Toast.Style.Failure, title: "Please paste some JSON first" });
+                showToast({ style: Toast.Style.Failure, title: "请先粘贴 JSON 内容" });
                 return;
               }
               const result = tryFormatJson(text);
               if (result.kind === "error") {
                 showToast({
                   style: Toast.Style.Failure,
-                  title: "Invalid JSON",
+                  title: "JSON 格式不合法",
                   message: result.message,
                 });
                 return;
@@ -99,15 +98,12 @@ function JsonInputForm({ initialValue }: { initialValue: string }) {
     >
       <Form.TextArea
         id="content"
-        title="JSON Content"
+        title="JSON 内容"
         placeholder='{\n  "hello": "world"\n}'
         defaultValue={initialValue}
         enableMarkdown={false}
       />
-      <Form.Description
-        title="Tip"
-        text="Paste JSON, then press ⏎ (Enter) to format it. The pretty-printed result can be copied with ⌘C."
-      />
+      <Form.Description title="提示" text="粘贴 JSON 后按 ⏎（回车）即可格式化；美化后的结果可用 ⌘C 复制。" />
     </Form>
   );
 }
@@ -125,19 +121,19 @@ function JsonResultView({ json, original }: { json: string; original: string }) 
       actions={
         <ActionPanel>
           <Action.CopyToClipboard
-            title="Copy Formatted JSON"
+            title="复制格式化后的 JSON"
             icon={Icon.Clipboard}
             content={json}
             shortcut={{ modifiers: ["cmd"], key: "c" }}
           />
           <Action.CopyToClipboard
-            title="Copy Raw Input"
+            title="复制原始输入"
             icon={Icon.Text}
             content={original}
             shortcut={{ modifiers: ["cmd", "shift"], key: "c" }}
           />
           <Action
-            title="Edit Input"
+            title="编辑输入"
             icon={Icon.Pencil}
             shortcut={{ modifiers: ["cmd"], key: "e" }}
             onAction={() => navigation.pop()}
@@ -174,22 +170,22 @@ function buildMetadata(json: string, original: string) {
   }
   return (
     <Detail.Metadata>
-      <Detail.Metadata.Label title="Type" text={parsedKind} icon={Icon.Code} />
-      <Detail.Metadata.Label title="Length" text={`${json.length} chars`} />
-      <Detail.Metadata.Label title="Size" text={`${formatBytes(byteSize)}`} />
+      <Detail.Metadata.Label title="类型" text={parsedKind} icon={Icon.Code} />
+      <Detail.Metadata.Label title="长度" text={`${json.length} 字符`} />
+      <Detail.Metadata.Label title="体积" text={`${formatBytes(byteSize)}`} />
       <Detail.Metadata.Separator />
-      <Detail.Metadata.Label title="Original" text={`${original.length} chars`} />
-      <Detail.Metadata.Label title="Original size" text={`${formatBytes(originalSize)}`} />
+      <Detail.Metadata.Label title="原始长度" text={`${original.length} 字符`} />
+      <Detail.Metadata.Label title="原始体积" text={`${formatBytes(originalSize)}`} />
     </Detail.Metadata>
   );
 }
 
 function describeJson(value: unknown): string {
-  if (value === null) return "null";
-  if (Array.isArray(value)) return `Array (${value.length})`;
+  if (value === null) return "空值";
+  if (Array.isArray(value)) return `数组（${value.length} 项）`;
   if (typeof value === "object") {
     const keys = Object.keys(value as Record<string, unknown>);
-    return `Object (${keys.length} keys)`;
+    return `对象（${keys.length} 个键）`;
   }
   return typeof value;
 }

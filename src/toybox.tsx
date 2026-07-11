@@ -4,17 +4,17 @@ import { useMemo } from "react";
 import { tools, type Tool } from "./tools";
 
 /**
- * Central hub of the ToyBox extension.
+ * ToyBox 扩展的中央入口。
  *
- * Shows every registered tool with a dynamic search bar. Selecting a tool
- * hands control over to the matching sub-command via `launchCommand`, which
- * keeps each tool's UX independent (clipboard fallback, manual entry, etc.).
+ * 以可搜索的列表展示所有已注册的工具，顶部带动态搜索栏。
+ * 选中某个工具后通过 `launchCommand` 跳转到对应子命令，让每个工具
+ * 保持独立的体验（剪贴板自动识别、手动输入兜底等）。
  */
 export default function Command() {
   const filteredTools = useTools();
 
   return (
-    <List searchBarPlaceholder="Search ToyBox tools (e.g. json, mybatis)…" filtering={false}>
+    <List searchBarPlaceholder="搜索 ToyBox 工具（如 json、mybatis）…" filtering={false}>
       {filteredTools.map((tool) => (
         <List.Item
           key={tool.name}
@@ -25,7 +25,7 @@ export default function Command() {
           actions={
             <ActionPanel>
               <Action
-                title="Open Tool"
+                title="打开工具"
                 icon={Icon.ArrowRight}
                 onAction={async () => {
                   await launchCommand({ name: tool.name, type: LaunchType.UserInitiated });
@@ -40,17 +40,10 @@ export default function Command() {
 }
 
 /**
- * Filters the static `tools` registry based on the user's search text.
- *
- * Raycast's built-in `List` filtering handles substring matches against
- * `title`/`keywords` automatically, but we want a fuzzy/case-insensitive
- * match across every visible field so partial Chinese / English queries
- * still feel responsive.
+ * 主入口的搜索由 Raycast `List` 组件基于 `title` 与 `keywords` 自动
+ * 做子串匹配处理（设置 `filtering={false}` 关闭默认过滤）。这里只做
+ * 一次 memo 缓存，保持契约简单。
  */
 function useTools(): Tool[] {
-  // List does not currently expose its search text via a hook, so we keep
-  // filtering local to the rendered items through `filtering={false}`.
-  // Returning the full list keeps the contract simple – search happens in
-  // the `List.Item` keywords.
   return useMemo(() => tools, []);
 }

@@ -17,6 +17,10 @@
 - 引入 CHANGELOG 维护规范：在 `AGENTS.md` 新增「CHANGELOG 维护」小节，要求每次合并前同步追加变更条目
 - 在 `README.md` 与 `AGENTS.md` 补充 [Raycast 官方开发文档](https://developers.raycast.com/) 链接
 
+### Refactor
+
+- 将 `package.json` 与 `src/` 下的用户面向文案中文化：扩展/命令 `description`、表单字段、Action title、Toast 提示、Detail Metadata 等统一改为中文；JSDoc 注释同步中文化。`tools.ts` 的 `keywords` 仍保持英文技术关键词。
+
 ### Chore
 
 - 完善仓库基础设施：补充 `src/utils` 与 `src/components` 目录结构说明，并新增 `tmp/` 忽略项

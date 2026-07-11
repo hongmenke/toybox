@@ -1,38 +1,37 @@
 import { Icon } from "@raycast/api";
 
 /**
- * Catalogue of every tool that ships with ToyBox.
+ * ToyBox 工具目录的单一来源。
  *
- * Each entry describes a sub-command that can either be invoked directly
- * from Raycast (it has its own `name` registered in package.json) or be
- * launched from the central hub via `launchCommand`.
+ * 每条记录对应一个子命令：既可以由 Raycast 直接调用（在 `package.json`
+ * 中已注册同名 `name`），也可以从中央入口通过 `launchCommand` 启动。
  */
 export type Tool = {
-  /** Internal identifier – must match the command name in `package.json`. */
+  /** 内部标识符，必须与 `package.json` 中的命令名一致。 */
   name: string;
-  /** Human readable title shown in the hub list. */
+  /** 在主入口列表中显示的标题。 */
   title: string;
-  /** Short description shown beneath the title and inside Raycast's command palette. */
+  /** 在主入口副标题以及 Raycast 命令面板中显示的简要说明。 */
   description: string;
-  /** Keywords used for the dynamic search in the hub list. */
+  /** 主入口动态搜索使用的关键词。 */
   keywords: string[];
-  /** Emoji or Raycast icon used in the hub list. */
+  /** 主入口列表中显示的图标。 */
   icon: Icon;
 };
 
 export const tools: Tool[] = [
   {
     name: "json",
-    title: "JSON Viewer",
-    description: "Pretty-print JSON from the clipboard or paste it manually.",
+    title: "JSON 查看器",
+    description: "美化剪贴板中的 JSON，或手动粘贴后格式化。",
     keywords: ["json", "format", "pretty", "viewer", "parse"],
     icon: Icon.Code,
   },
   {
     name: "mybatis",
-    title: "MyBatis SQL Formatter",
-    description: "Convert a MyBatis Preparing/Parameters log line into a runnable SQL statement.",
-    keywords: ["mybatis", "sql", "log", "orm", "java", "format"],
+    title: "MyBatis SQL 格式化器",
+    description: "将 MyBatis 准备参数日志转换为可执行的 SQL 语句。",
+    keywords: ["mybatis", "sql", "log", "format"],
     icon: Icon.Terminal,
   },
 ];
