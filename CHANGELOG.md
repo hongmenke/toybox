@@ -25,6 +25,7 @@
 
 - 将 `package.json` 与 `src/` 下的用户面向文案中文化：扩展/命令 `description`、表单字段、Action title、Toast 提示、Detail Metadata 等统一改为中文；JSDoc 注释同步中文化。`tools.ts` 的 `keywords` 仍保持英文技术关键词。
 - **BREAKING**：通过 OpenSpec 变更 `refactor-json-viewer-to-tree` 把 `json` 命令从「Detail 视图美化 JSON」重构为原生树形查看器。新增 `Form` 输入页、`JsonNodePage` 树形浏览页、`JsonValuePage` Primitive 详情页，支持 `Action.Push` 懒加载下钻、标准 JSONPath、节点图标与复制操作。剪贴板自动识别与美化输出 Detail 视图被移除；规格 `json-viewer` 同步替换。
+- 通过 OpenSpec 变更 `restore-clipboard-auto-detect` 恢复剪贴板智能识别能力：命令挂载时尝试读取剪贴板，合法 JSON 直接 push `JsonNodePage` 根节点，无需用户交互；读取失败 / 剪贴板为空 / 内容非 JSON 时回退到 Form 手动输入（TextArea 默认填充剪贴板原文）。规格 `json-viewer` 增量更新。
 
 ### Chore
 
