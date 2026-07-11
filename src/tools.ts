@@ -23,8 +23,8 @@ export const tools: Tool[] = [
   {
     name: "json",
     title: "JSON 查看器",
-    description: "美化剪贴板中的 JSON，或手动粘贴后格式化。",
-    keywords: ["json", "format", "pretty", "viewer", "parse"],
+    description: "在 Raycast 中以树形结构浏览任意 JSON 文本。",
+    keywords: ["json", "tree", "viewer", "path", "node", "browse"],
     icon: Icon.Code,
   },
   {

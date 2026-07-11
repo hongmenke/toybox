@@ -23,7 +23,7 @@
     {
       "name": "json",
       "title": "格式化 JSON",
-      "description": "美化剪贴板或手动输入的 JSON",
+      "description": "在 Raycast 中以树形结构浏览任意 JSON 文本",
       "mode": "view"
     },
     {
