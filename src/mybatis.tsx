@@ -1,4 +1,15 @@
-import { Action, ActionPanel, Clipboard, Detail, Form, Icon, showToast, Toast, useNavigation } from "@raycast/api";
+import {
+  Action,
+  ActionPanel,
+  Clipboard,
+  Detail,
+  Form,
+  Icon,
+  showToast,
+  Toast,
+  useNavigation,
+  Keyboard,
+} from "@raycast/api";
 import { useEffect, useMemo, useState } from "react";
 
 /**
@@ -147,12 +158,12 @@ function MybatisResultView({ parsed, original }: { parsed: ParsedMybatisLog; ori
             title="复制原始日志"
             icon={Icon.Text}
             content={original}
-            shortcut={{ modifiers: ["cmd", "shift"], key: "c" }}
+            shortcut={Keyboard.Shortcut.Common.Copy}
           />
           <Action
             title="编辑输入"
             icon={Icon.Pencil}
-            shortcut={{ modifiers: ["cmd"], key: "e" }}
+            shortcut={Keyboard.Shortcut.Common.Edit}
             onAction={() => navigation.pop()}
           />
         </ActionPanel>
