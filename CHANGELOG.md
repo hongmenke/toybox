@@ -11,6 +11,10 @@
 - 初始化项目脚手架：提供主入口 `toybox`、`json`、`mybatis` 命令骨架与共享工具注册表
 - 添加 OpenSpec 规格与首次变更归档，建立规格驱动的工作流
 
+### Changed
+
+- 为 `toybox`、`json`、`mybatis` 三个命令分别配置独立的 Raycast 命令图标（`assets/toybox.png`、`assets/json-viewer.png`、`assets/mybatis.png`），命令面板按命令展示对应图标；扩展级别 `icon` 同步指向 `toybox.png`，移除冗余的全局 `assets/extension-icon.png`
+
 ### Docs
 
 - 新增 `AGENTS.md` 贡献者与 AI Agent 指南

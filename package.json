@@ -3,7 +3,7 @@
   "name": "toybox",
   "title": "ToyBox",
   "description": "聚合常用开发小工具的 Raycast 扩展",
-  "icon": "extension-icon.png",
+  "icon": "toybox.png",
   "author": "hongmenke",
   "platforms": [
     "macOS",
@@ -18,19 +18,22 @@
       "name": "toybox",
       "title": "ToyBox",
       "description": "打开 ToyBox 工具中心",
-      "mode": "view"
+      "mode": "view",
+      "icon": "toybox.png"
     },
     {
       "name": "json",
       "title": "格式化 JSON",
       "description": "在 Raycast 中以树形结构浏览任意 JSON 文本",
-      "mode": "view"
+      "mode": "view",
+      "icon": "json-viewer.png"
     },
     {
       "name": "mybatis",
       "title": "格式化 MyBatis SQL",
       "description": "将 MyBatis 日志行转换为可执行的 SQL",
-      "mode": "view"
+      "mode": "view",
+      "icon": "mybatis.png"
     }
   ],
   "dependencies": {
