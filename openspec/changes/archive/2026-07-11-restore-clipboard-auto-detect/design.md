@@ -39,6 +39,7 @@
 ### Decision 3: Form 是「兜底」，不是「唯一入口」
 
 Form 仍然存在，并提供：
+
 - TextArea 默认值 = 剪贴板原始文本（如果有，让用户微调）。
 - 「View JSON」主操作，提交时复用 `parseJson` + `buildNode` + `navigation.push(<JsonNodePage>)` 流程。
 

@@ -31,14 +31,17 @@
 ## REMOVED Requirements
 
 ### Requirement: Clipboard auto-detection on mount
+
 **Reason**: 改为始终从 Form 入口开始，避免误识别剪贴板中的非 JSON 内容（例如刚刚复制的一段 SQL）。
 **Migration**: 用户主动在 Form 中粘贴 JSON 文本。
 
 ### Requirement: Result view provides copy actions
+
 **Reason**: 不再有"美化后 Detail"结果视图；复制能力下放至每个节点的 Action（Open / Copy Value / Copy JSON Path / Copy JSON）。
 **Migration**: 在树形浏览页或 Primitive 详情页通过 ActionPanel 的对应 Action 复制。
 
 ### Requirement: Result view exposes metadata
+
 **Reason**: 不再使用 Detail 视图作为结果承载；类型、字符数、字节数等信息由 `JsonValuePage` 的 Metadata 侧栏针对单个节点展示。
 **Migration**: 点击任意 Primitive 节点，在 `JsonValuePage` 详情中查看 Key / Type / Value / JSONPath。
 

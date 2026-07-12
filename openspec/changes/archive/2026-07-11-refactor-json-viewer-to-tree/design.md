@@ -1,6 +1,6 @@
 ## Context
 
-当前 `src/json.tsx` 把整个 JSON 值用 `JSON.stringify(value, null, 2)` 美化后丢进 `Detail` 视图的 ```json``` 围栏代码块里。问题有三个：
+当前 `src/json.tsx` 把整个 JSON 值用 `JSON.stringify(value, null, 2)` 美化后丢进 `Detail` 视图的 `json` 围栏代码块里。问题有三个：
 
 1. 嵌套深的 JSON 完全无法折叠 / 跳读，只能靠 Cmd+F 在 Markdown 里搜；
 2. 拿不到单个字段的 JSONPath，复制时要手工数括号；
@@ -35,13 +35,13 @@ Raycast 官方组件（`List` / `ActionPanel` / `Action.Push` / `Detail` / `Form
 type JsonNodeType = "object" | "array" | "string" | "number" | "boolean" | "null";
 
 interface JsonNode {
-  key: string;          // 当前节点在其父中的展示名（顶层为 "root"）
-  indexKey: string;     // 用于生成子节点 key 的原始名（数组下标或对象键名）
-  path: string;         // 标准 JSONPath，例如 "$.user.address.city"
+  key: string; // 当前节点在其父中的展示名（顶层为 "root"）
+  indexKey: string; // 用于生成子节点 key 的原始名（数组下标或对象键名）
+  path: string; // 标准 JSONPath，例如 "$.user.address.city"
   type: JsonNodeType;
-  value: unknown;       // 原始 JS 值，仅在 primitive 时使用
+  value: unknown; // 原始 JS 值，仅在 primitive 时使用
   displayValue: string; // 列表中显示的摘要
-  childCount?: number;  // object/array 时填充
+  childCount?: number; // object/array 时填充
   children?: JsonNode[]; // object/array 时填充（懒填充，仅在用户下钻时构造）
 }
 ```
@@ -64,13 +64,13 @@ interface JsonNode {
 
 三个 React 组件：
 
-| 组件 | 职责 |
-| --- | --- |
-| `JsonInputForm`（在 `src/json.tsx` 内） | `Form.TextArea` 收集输入；提交时 `JSON.parse` 校验；成功 → `navigation.push(<JsonNodePage ...>)`；失败 → `navigation.push(<JsonErrorPage ...>)` |
-| `JsonErrorPage`（在 `src/json.tsx` 内） | `Detail` 视图展示错误信息 + 原始输入 + "返回编辑" Action |
-| `JsonNodePage`（`src/components/JsonNodePage.tsx`） | `List` 渲染当前层直接子节点；Object/Array → `Action.Push(<JsonNodePage ...>)`；Primitive → `Action.Push(<JsonValuePage ...>)` |
-| `JsonValuePage`（`src/components/JsonValuePage.tsx`） | `Detail` 视图展示 Key / Type / Value / Path；提供复制操作 |
-| `JsonTree`（`src/components/JsonTree.tsx`） | 被 `JsonNodePage` 调用的纯展示 `List`，把 `JsonNode[]` 转成 `List.Item` 数组 |
+| 组件                                                  | 职责                                                                                                                                            |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `JsonInputForm`（在 `src/json.tsx` 内）               | `Form.TextArea` 收集输入；提交时 `JSON.parse` 校验；成功 → `navigation.push(<JsonNodePage ...>)`；失败 → `navigation.push(<JsonErrorPage ...>)` |
+| `JsonErrorPage`（在 `src/json.tsx` 内）               | `Detail` 视图展示错误信息 + 原始输入 + "返回编辑" Action                                                                                        |
+| `JsonNodePage`（`src/components/JsonNodePage.tsx`）   | `List` 渲染当前层直接子节点；Object/Array → `Action.Push(<JsonNodePage ...>)`；Primitive → `Action.Push(<JsonValuePage ...>)`                   |
+| `JsonValuePage`（`src/components/JsonValuePage.tsx`） | `Detail` 视图展示 Key / Type / Value / Path；提供复制操作                                                                                       |
+| `JsonTree`（`src/components/JsonTree.tsx`）           | 被 `JsonNodePage` 调用的纯展示 `List`，把 `JsonNode[]` 转成 `List.Item` 数组                                                                    |
 
 每一层都是独立的页面栈帧，浏览器/导航历史天然支持 ESC 返回上一层。
 
@@ -82,14 +82,14 @@ interface JsonNode {
 
 直接复用 `@raycast/api` 内置图标常量，避免引入 emoji 或自定义 SVG：
 
-| 类型 | 图标 |
-| --- | --- |
-| object | `Icon.Folder` |
-| array | `Icon.List` |
-| string | `Icon.Text` |
-| number | `Icon.Number` |
-| boolean | `Icon.Checkmark` |
-| null | `Icon.MinusCircle`（Raycast 没有 `Icon.Minus`，用 `MinusCircle` 表达"无值"） |
+| 类型    | 图标                                                                         |
+| ------- | ---------------------------------------------------------------------------- |
+| object  | `Icon.Folder`                                                                |
+| array   | `Icon.List`                                                                  |
+| string  | `Icon.Text`                                                                  |
+| number  | `Icon.Number`                                                                |
+| boolean | `Icon.Checkmark`                                                             |
+| null    | `Icon.MinusCircle`（Raycast 没有 `Icon.Minus`，用 `MinusCircle` 表达"无值"） |
 
 ### Decision 6: 搜索范围 = 当前层 Key
 
