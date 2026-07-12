@@ -198,7 +198,7 @@ export function parseMybatisLog(input: string): ParsedMybatisLog | null {
   const rawParameters = parametersLine ? splitParameters(parametersLine.tail) : [];
   const parameters = rawParameters.map(parseParameter);
 
-  if (rawParameters.length > 0 && rawParameters.length !== countPlaceholders(template)) {
+  if (rawParameters.length > 0 && rawParameters.length !== countSubstitutablePlaceholders(template)) {
     // Best effort: keep going but flag the mismatch via a toast. We do not
     // throw because partial logs (e.g. only the Preparing line) are valid
     // inputs the user may want to format.
@@ -263,26 +263,157 @@ export function parseParameter(token: string): ParsedParameter {
   return { raw: token, value: match[1].trim(), type: match[2].trim() };
 }
 
-function countPlaceholders(sql: string): number {
-  return (sql.match(/\?/g) ?? []).length;
+/**
+ * Count placeholders that are safe to substitute (i.e. outside string
+ * literals and SQL comments). See {@link forEachSubstitutablePlaceholder}.
+ */
+export function countSubstitutablePlaceholders(sql: string): number {
+  let count = 0;
+  forEachSubstitutablePlaceholder(sql, () => {
+    count += 1;
+  });
+  return count;
 }
 
 /**
- * Replace every `?` placeholder in `template` with the formatted value of
- * the next parameter in `parameters`. Unbound placeholders stay as `?`
- * so the user can spot missing parameters.
+ * Replace every substitutable `?` placeholder in `template` with the
+ * formatted value of the next parameter in `parameters`. Unbound or
+ * non-substitutable placeholders stay as `?` so the user can spot them.
+ *
+ * A placeholder is "substitutable" when it sits in SQL syntax context —
+ * i.e. NOT inside a single-quoted string, a double-quoted identifier,
+ * a `--` line comment or a `/* … *\/` block comment. The check is done by
+ * a small character-level state scanner.
  */
 export function substitutePlaceholders(template: string, parameters: ParsedParameter[]): string {
   let index = 0;
-  return template.replace(/\?/g, () => {
+  let out = "";
+  forEachSubstitutablePlaceholder(template, () => {
     if (index >= parameters.length) {
       index += 1;
-      return "?";
+      out += "?";
+      return;
     }
     const param = parameters[index];
     index += 1;
-    return formatParameter(param);
+    out += formatParameter(param);
   });
+  return out;
+}
+
+/**
+ * Walk the SQL string and call `onPlaceholder` for every `?` that is
+ * NOT inside a string literal or comment. The function appends untouched
+ * characters (including `?` inside strings/comments) to the result via
+ * the {@link SqlScanner} accumulator helper, so the caller can use it
+ * either to count placeholders, replace them, or both.
+ */
+function forEachSubstitutablePlaceholder(sql: string, onPlaceholder: () => void): void {
+  const scanner = new SqlScanner(sql);
+  while (!scanner.atEnd()) {
+    if (scanner.consumePlaceholder()) {
+      onPlaceholder();
+    }
+  }
+}
+
+/**
+ * 极简 SQL 词法扫描器：跟踪当前字符是否位于单引号串、双引号串、
+ * 行注释或块注释内。仅用于判定 `?` 是否处于可替换上下文。
+ */
+class SqlScanner {
+  private index = 0;
+
+  constructor(private readonly source: string) {}
+
+  atEnd(): boolean {
+    return this.index >= this.source.length;
+  }
+
+  /**
+   * 跳过从当前位置开始的一段 SQL 字符串 / 注释 / 单字符，
+   * 总是把游标向前推进。调用方在循环里反复调用直至遇到 `?` 或到达末尾。
+   */
+  private skipOne(): void {
+    if (this.atEnd()) return;
+    const ch = this.source[this.index];
+    const next = this.source[this.index + 1];
+    // 单引号字符串：'...'，支持 '' 转义为字面量 '。
+    if (ch === "'") {
+      this.index += 1;
+      while (!this.atEnd()) {
+        if (this.source[this.index] === "'") {
+          if (this.source[this.index + 1] === "'") {
+            this.index += 2;
+            continue;
+          }
+          this.index += 1;
+          return;
+        }
+        this.index += 1;
+      }
+      return;
+    }
+    // 双引号字符串："..."，支持 "" 转义。
+    if (ch === '"') {
+      this.index += 1;
+      while (!this.atEnd()) {
+        if (this.source[this.index] === '"') {
+          if (this.source[this.index + 1] === '"') {
+            this.index += 2;
+            continue;
+          }
+          this.index += 1;
+          return;
+        }
+        this.index += 1;
+      }
+      return;
+    }
+    // 行注释：-- 起，直到换行；MyBatis 实际日志中注释极少，简单按见到 `--` 处理。
+    if (ch === "-" && next === "-") {
+      this.index += 2;
+      while (!this.atEnd() && this.source[this.index] !== "\n") {
+        this.index += 1;
+      }
+      return;
+    }
+    // 块注释：/* ... */，支持嵌套（MySQL 风格）。
+    if (ch === "/" && next === "*") {
+      this.index += 2;
+      let depth = 1;
+      while (!this.atEnd() && depth > 0) {
+        if (this.source[this.index] === "/" && this.source[this.index + 1] === "*") {
+          depth += 1;
+          this.index += 2;
+          continue;
+        }
+        if (this.source[this.index] === "*" && this.source[this.index + 1] === "/") {
+          depth -= 1;
+          this.index += 2;
+          continue;
+        }
+        this.index += 1;
+      }
+      return;
+    }
+    this.index += 1;
+  }
+
+  /**
+   * 把游标推进到下一个 `?` 所在的位置（SQL 语法上下文），
+   * 返回 true 表示找到了一个可替换的 `?`，并已将其消耗。
+   */
+  consumePlaceholder(): boolean {
+    while (!this.atEnd() && this.source[this.index] !== "?") {
+      this.skipOne();
+    }
+    if (this.atEnd() || this.source[this.index] !== "?") {
+      return false;
+    }
+    this.index += 1;
+    return true;
+  }
 }
 
 const NUMERIC_TYPES = new Set([
@@ -333,24 +464,94 @@ function escapeString(value: string): string {
  * `INSERT INTO ...` template using the same column list. Intended as a
  * quick copy action for developers who want to seed data; not a general
  * SQL parser.
+ *
+ * 列切分遵循 SQL 括号配对规则：函数调用内的逗号（如 `CONCAT(a, ', ', b)`）
+ * 不被视为列分隔；具体实现见 {@link splitSelectColumns}。
  */
 function toInsertStatement(sql: string): string {
   const match = /^\s*SELECT\s+([\s\S]+?)\s+FROM\s+([\w."`]+)/i.exec(sql);
   if (!match) {
     return sql;
   }
-  const columns = match[1]
-    .split(",")
-    .map((part) => part.trim())
-    .map((part) => part.replace(/\s+AS\s+\w+/i, ""))
+  const columns = splitSelectColumns(match[1])
+    .map((part) => part.replace(/\s+AS\s+\w+/i, "").trim())
     .filter(Boolean);
   if (columns.length === 0) {
     return sql;
   }
   const table = match[2];
-  const columnList = columns.map((c) => c).join(", ");
+  const columnList = columns.join(", ");
   const placeholders = columns.map(() => "?").join(", ");
   return `INSERT INTO ${table} (${columnList}) VALUES (${placeholders});`;
+}
+
+/**
+ * Split a SELECT projection list into individual column expressions.
+ *
+ * Naive `split(",")` is unsafe because projection expressions may contain
+ * commas inside function calls (e.g. `CONCAT(a, ', ', b)`) or inside
+ * nested parentheses. This walker treats top-level commas (depth = 0,
+ * outside string literals) as separators only.
+ */
+export function splitSelectColumns(projection: string): string[] {
+  const columns: string[] = [];
+  let depth = 0;
+  let inSingle = false;
+  let inDouble = false;
+  let buffer = "";
+
+  for (let i = 0; i < projection.length; i += 1) {
+    const ch = projection[i];
+    const next = projection[i + 1];
+    if (inSingle) {
+      buffer += ch;
+      if (ch === "'" && next === "'") {
+        buffer += next;
+        i += 1;
+        continue;
+      }
+      if (ch === "'") inSingle = false;
+      continue;
+    }
+    if (inDouble) {
+      buffer += ch;
+      if (ch === '"' && next === '"') {
+        buffer += next;
+        i += 1;
+        continue;
+      }
+      if (ch === '"') inDouble = false;
+      continue;
+    }
+    if (ch === "'") {
+      inSingle = true;
+      buffer += ch;
+      continue;
+    }
+    if (ch === '"') {
+      inDouble = true;
+      buffer += ch;
+      continue;
+    }
+    if (ch === "(") {
+      depth += 1;
+      buffer += ch;
+      continue;
+    }
+    if (ch === ")") {
+      depth = Math.max(0, depth - 1);
+      buffer += ch;
+      continue;
+    }
+    if (ch === "," && depth === 0) {
+      columns.push(buffer);
+      buffer = "";
+      continue;
+    }
+    buffer += ch;
+  }
+  columns.push(buffer);
+  return columns.map((c) => c.trim()).filter((c) => c.length > 0);
 }
 
 /* ------------------------------------------------------------------------ */

@@ -2,18 +2,28 @@
  * JSON 查看器命令。
  *
  * 启动时尝试把剪贴板内容当作 JSON 解析：
- * - 成功 → 直接 push 到 JsonNodePage 的根节点，无需用户交互。
- * - 失败 / 抛错 / 为空 → 回退到 JsonInputForm。
+ * - 成功 → 根据根节点类型选择入口：object/array push 到 `JsonNodePage`，
+ *   primitive push 到 `JsonValuePage`；均无需用户交互。
+ * - 失败 / 抛错 / 为空 → 回退到 `JsonInputForm`。
  */
 
 import { useEffect, useState } from "react";
 import { Action, ActionPanel, Clipboard, Detail, Form, showToast, Toast, useNavigation } from "@raycast/api";
 
 import { JsonNodePage } from "./components/JsonNodePage";
+import { JsonValuePage } from "./components/JsonValuePage";
 import { buildNode, parseJson } from "./json-viewer/jsonParser";
 
 /** 加载态时 Detail 视图展示的占位文案。 */
 const LOADING_MARKDOWN = "正在读取剪贴板…";
+
+/** 构造根节点时复用的固定元数据：根 key 固定为 `root`，路径固定为 `$`。 */
+const ROOT_OPTIONS = {
+  key: "root",
+  indexKey: "root",
+  parentPath: "$",
+  parentType: "root" as const,
+};
 
 /**
  * 命令挂载时剪贴板读取的状态机。
@@ -29,7 +39,7 @@ type ClipboardState =
 /**
  * 命令入口。渲染状态由 ClipboardState 决定：
  * - loading → loading Detail；
- * - ready + 合法 JSON → 立刻 push 到树根；
+ * - ready + 合法 JSON → 立刻 push 到对应页面（object/array → 树根，primitive → 详情）；
  * - ready + 非法 JSON / 空 → 渲染 Form；
  * - error → 渲染 Form + Toast。
  */
@@ -69,13 +79,13 @@ export default function Command() {
     if (result.kind !== "ok") {
       return;
     }
-    const root = buildNode(result.value, {
-      key: "root",
-      indexKey: "root",
-      parentPath: "$",
-      parentType: "root",
-    });
-    navigation.push(<JsonNodePage node={root} root={root} />);
+    const root = buildNode(result.value, ROOT_OPTIONS);
+    if (root.type === "object" || root.type === "array") {
+      navigation.push(<JsonNodePage node={root} root={root} />);
+    } else {
+      // 顶层 primitive 直接进详情页，避免空树列表。
+      navigation.push(<JsonValuePage node={root} root={root} />);
+    }
   }, [clipboard, navigation]);
 
   useEffect(() => {
@@ -105,8 +115,8 @@ interface JsonInputFormProps {
 /**
  * 手动输入 Form：剪贴板智能识别失败时的兜底入口。
  *
- * 提交时调用 parseJson 校验：成功 → 推送到 JsonNodePage，
- * 失败 → 推送到 JsonErrorPage。
+ * 提交时调用 parseJson 校验：成功 → 根据根类型 push 到 `JsonNodePage` 或
+ * `JsonValuePage`，失败 → push 到 `JsonErrorPage`。
  */
 function JsonInputForm({ initialValue }: JsonInputFormProps) {
   const navigation = useNavigation();
@@ -124,13 +134,12 @@ function JsonInputForm({ initialValue }: JsonInputFormProps) {
                 navigation.push(<JsonErrorPage message={result.message} original={text} />);
                 return;
               }
-              const root = buildNode(result.value, {
-                key: "root",
-                indexKey: "root",
-                parentPath: "$",
-                parentType: "root",
-              });
-              navigation.push(<JsonNodePage node={root} root={root} />);
+              const root = buildNode(result.value, ROOT_OPTIONS);
+              if (root.type === "object" || root.type === "array") {
+                navigation.push(<JsonNodePage node={root} root={root} />);
+              } else {
+                navigation.push(<JsonValuePage node={root} root={root} />);
+              }
             }}
           />
         </ActionPanel>

@@ -1,5 +1,4 @@
 import { Action, ActionPanel, Icon, launchCommand, LaunchType, List } from "@raycast/api";
-import { useMemo } from "react";
 
 import { tools, type Tool } from "./tools";
 
@@ -9,13 +8,14 @@ import { tools, type Tool } from "./tools";
  * 以可搜索的列表展示所有已注册的工具，顶部带动态搜索栏。
  * 选中某个工具后通过 `launchCommand` 跳转到对应子命令，让每个工具
  * 保持独立的体验（剪贴板自动识别、手动输入兜底等）。
+ *
+ * 搜索由 Raycast `List` 内置按 `title / subtitle / keywords` 自动完成；
+ * 工具注册表（`src/tools.ts`）是单一事实源，新增工具只需追加一条记录。
  */
 export default function Command() {
-  const filteredTools = useTools();
-
   return (
-    <List searchBarPlaceholder="搜索 ToyBox 工具（如 json、mybatis）…" filtering={false}>
-      {filteredTools.map((tool) => (
+    <List searchBarPlaceholder="搜索 ToyBox 工具（如 json、mybatis）…">
+      {tools.map((tool) => (
         <List.Item
           key={tool.name}
           title={tool.title}
@@ -40,10 +40,7 @@ export default function Command() {
 }
 
 /**
- * 主入口的搜索由 Raycast `List` 组件基于 `title` 与 `keywords` 自动
- * 做子串匹配处理（设置 `filtering={false}` 关闭默认过滤）。这里只做
- * 一次 memo 缓存，保持契约简单。
+ * 预留工具类型导出，便于将来按需扩展过滤 / 分组逻辑时类型仍可被复用。
+ * 当前实现直接使用 Raycast 内置过滤，故未引用。
  */
-function useTools(): Tool[] {
-  return useMemo(() => tools, []);
-}
+export type { Tool };

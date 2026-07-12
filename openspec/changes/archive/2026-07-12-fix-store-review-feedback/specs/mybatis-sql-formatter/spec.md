@@ -1,31 +1,4 @@
-# mybatis-sql-formatter 规格说明
-
-## Purpose
-
-MyBatis SQL 格式化器命令：解析 MyBatis 日志中的 `Preparing:` / `Parameters:` 行，把绑定值替换进 SQL 模板中的 `?` 占位符，输出可执行的 SQL 语句。
-## Requirements
-### Requirement: MyBatis command is registered
-
-扩展 MUST 在 `package.json` 中以 `mode: "view"` 注册一个 `mybatis` 命令，以便该工具可以直接从 Raycast 命令面板调用。
-
-#### Scenario: MyBatis command is discoverable
-
-- **WHEN** 开发者打开 Raycast 并输入 "格式化 MyBatis SQL"（或 "Format MyBatis SQL"）
-- **THEN** `mybatis` 命令出现在结果列表中
-
-### Requirement: Clipboard auto-detection on mount
-
-命令在挂载时 MUST 调用 `Clipboard.readText()`。如果返回的文本中至少存在一行以 `Preparing:` 开头，命令 MUST 解析该行并推送到结果视图。
-
-#### Scenario: Clipboard contains a MyBatis log snippet
-
-- **WHEN** 命令打开时剪贴板内含一行以 `Preparing:` 开头的文本
-- **THEN** 命令解析该片段，并直接进入 `Detail` 视图渲染可执行的 SQL
-
-#### Scenario: Clipboard is empty or has no Preparing line
-
-- **WHEN** 剪贴板为空或不包含 `Preparing:` 行
-- **THEN** 命令渲染一个 `Form`，让用户可以手动粘贴日志
+## MODIFIED Requirements
 
 ### Requirement: MyBatis log parsing
 
@@ -55,30 +28,6 @@ MyBatis SQL 格式化器命令：解析 MyBatis 日志中的 `Preparing:` / `Par
 
 - **WHEN** SQL 模板中包含字面量 `\n` / `\t` / `\r` 转义序列
 - **THEN** 格式化后的 SQL 把它们替换为对应的空白字符
-
-### Requirement: Parameter value formatting
-
-格式化器 MUST 按 MyBatis 类型渲染每个参数：
-
-- `null` 值输出为字面量 `NULL`
-- 数值类型（`Integer`、`Long`、`Short`、`Byte`、`Float`、`Double`、`BigDecimal`、`BigInteger`、`Number` 及其原始类型变体）原样输出
-- `Boolean`（及其原始类型变体）输出为 `TRUE` / `FALSE`
-- 其他类型（包括 `String`、`Date`、`Timestamp`）用单引号包裹，值内部的单引号双写
-
-#### Scenario: Numeric parameter is emitted raw
-
-- **WHEN** 参数类型为 `Integer`、值为 `42`
-- **THEN** 格式化后的 SQL 包含 `42`（不带引号）
-
-#### Scenario: String parameter is quoted and escaped
-
-- **WHEN** 参数类型为 `String`、值为 `O'Brien`
-- **THEN** 格式化后的 SQL 包含 `'O''Brien'`
-
-#### Scenario: Null parameter becomes NULL
-
-- **WHEN** 参数类型为 `null` 或值为 `null`
-- **THEN** 格式化后的 SQL 包含字面量 `NULL`
 
 ### Requirement: Result view provides copy actions
 
@@ -112,13 +61,3 @@ MyBatis SQL 格式化器命令：解析 MyBatis 日志中的 `Preparing:` / `Par
 
 - **WHEN** SQL 为 `SELECT CAST(x AS INT), COALESCE(y, 0) FROM t`
 - **THEN** 生成的 INSERT 模板为 `INSERT INTO t (x, y) VALUES (?, ?);`（2 列 2 占位符）
-
-### Requirement: Result view exposes parameter metadata
-
-结果视图 MUST 在元数据侧栏列出每个解析得到的参数（类型 + 原始值预览），方便用户核对替换结果。
-
-#### Scenario: Metadata lists each parameter
-
-- **WHEN** 渲染格式化后的 SQL
-- **THEN** 元数据侧栏为每个参数各包含一行，展示其类型与原始值
-
