@@ -3,7 +3,9 @@
 ## Purpose
 
 MyBatis SQL 格式化器命令：解析 MyBatis 日志中的 `Preparing:` / `Parameters:` 行，把绑定值替换进 SQL 模板中的 `?` 占位符，输出可执行的 SQL 语句。
+
 ## Requirements
+
 ### Requirement: MyBatis command is registered
 
 扩展 MUST 在 `package.json` 中以 `mode: "view"` 注册一个 `mybatis` 命令，以便该工具可以直接从 Raycast 命令面板调用。
@@ -121,4 +123,3 @@ MyBatis SQL 格式化器命令：解析 MyBatis 日志中的 `Preparing:` / `Par
 
 - **WHEN** 渲染格式化后的 SQL
 - **THEN** 元数据侧栏为每个参数各包含一行，展示其类型与原始值
-
