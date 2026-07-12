@@ -39,8 +39,7 @@ export interface JsonNode {
 
 /** `parseJson` 的返回值：成功时携带已解析的 JS 值，失败时携带错误消息。 */
 export type ParseResult =
-  | { readonly kind: "ok"; readonly value: unknown }
-  | { readonly kind: "error"; readonly message: string };
+  { readonly kind: "ok"; readonly value: unknown } | { readonly kind: "error"; readonly message: string };
 
 /** `buildNode` 的可选项，控制键名展示与父路径。 */
 export interface BuildNodeOptions {
