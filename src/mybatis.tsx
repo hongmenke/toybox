@@ -298,17 +298,21 @@ export function countSubstitutablePlaceholders(sql: string): number {
  */
 export function substitutePlaceholders(template: string, parameters: ParsedParameter[]): string {
   let index = 0;
+  let cursor = 0;
   let out = "";
-  forEachSubstitutablePlaceholder(template, () => {
+  // callback 拿到每个 `?` 的起始下标，我们据此把 SQL 模板字符原样拼回 `out`，
+  // 再用参数值替换 `?`；若参数不足则保留原 `?` 便于用户定位遗漏。
+  forEachSubstitutablePlaceholder(template, (placeholderStart) => {
+    out += template.slice(cursor, placeholderStart);
     if (index >= parameters.length) {
-      index += 1;
       out += "?";
-      return;
+    } else {
+      out += formatParameter(parameters[index]);
     }
-    const param = parameters[index];
     index += 1;
-    out += formatParameter(param);
+    cursor = placeholderStart + 1;
   });
+  out += template.slice(cursor);
   return out;
 }
 
@@ -319,11 +323,12 @@ export function substitutePlaceholders(template: string, parameters: ParsedParam
  * the {@link SqlScanner} accumulator helper, so the caller can use it
  * either to count placeholders, replace them, or both.
  */
-function forEachSubstitutablePlaceholder(sql: string, onPlaceholder: () => void): void {
+function forEachSubstitutablePlaceholder(sql: string, onPlaceholder: (placeholderStart: number) => void): void {
   const scanner = new SqlScanner(sql);
   while (!scanner.atEnd()) {
     if (scanner.consumePlaceholder()) {
-      onPlaceholder();
+      // consumePlaceholder 已把游标推到 `?` 之后；回退一格即占位符起始下标。
+      onPlaceholder(scanner.getIndex() - 1);
     }
   }
 }
@@ -339,6 +344,11 @@ class SqlScanner {
 
   atEnd(): boolean {
     return this.index >= this.source.length;
+  }
+
+  /** 当前游标位置（即下一个待消费的字符下标）。 */
+  getIndex(): number {
+    return this.index;
   }
 
   /**

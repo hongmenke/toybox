@@ -2,6 +2,12 @@
 
 本文件从使用者视角记录 ToyBox 的功能与 UI 变更。维护性变更（`chore` / `docs` / `refactor` 等）不在此体现。条目按 [Conventional Commits](https://www.conventionalcommits.org/zh-hans/) 类型归类（参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)），使用中文描述。
 
+## [Unreleased]
+
+### Fixed
+
+- 修复 MyBatis SQL 格式化器在「`Preparing:` 完整带时间戳的日志」输入下仅输出参数值、丢失 SQL 模板的回归（例如 `'101''公众交付团队'`）；现在 SQL 关键字、表名、`LIKE` / `concat` 等模板字符完整保留，`?` 仅在 SQL 语法上下文处被替换。Refs: openspec/changes/fix-mybatis-substitute-placeholder-template-loss/
+
 ## [Initial Version] - {PR_MERGE_DATE}
 
 ### Added
